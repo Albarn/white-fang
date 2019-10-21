@@ -1,5 +1,4 @@
-﻿using AutoFixture;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +12,6 @@ namespace WhiteFang.Services.Tests
     [TestFixture(16 * 1024 * 1024, 3)]
     public class FileServiceTests
     {
-        private readonly Fixture fixture;
         private readonly FileService sut;
         private List<string> files;
         private string outputFile;
@@ -22,7 +20,6 @@ namespace WhiteFang.Services.Tests
 
         public FileServiceTests(int fileSize = 1024, int fileNumber = 3)
         {
-            fixture = new Fixture();
             sut = new FileService();
             files = new List<string>();
             outputFile = string.Empty;
@@ -36,7 +33,7 @@ namespace WhiteFang.Services.Tests
         {
             var time = DateTime.Now;
 
-            var dir = $"logs\\{time.Year}\\{time.Month}\\{time.Day}\\";
+            var dir = $"logs\\{time.Year}.{time.Month}.{time.Day}\\{TestContext.CurrentContext.Test.MethodName}\\";
             Directory.CreateDirectory(dir);
 
             files = new List<string>();
@@ -95,6 +92,21 @@ namespace WhiteFang.Services.Tests
 
             // act
             sut.Min(outputFile, files.ToArray());
+            var output = File.ReadAllText(outputFile);
+
+            // assert
+            Assert.True(expectedFileContent.SequenceEqual(output
+                .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => int.Parse(line))));
+        }
+
+        [Test]
+        public void MinParallel_Any_ShouldWriteMinToFile()
+        {
+            // arrange
+
+            // act
+            sut.MinParallel(outputFile, files.ToArray());
             var output = File.ReadAllText(outputFile);
 
             // assert

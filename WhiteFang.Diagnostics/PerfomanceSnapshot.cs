@@ -16,7 +16,7 @@ namespace WhiteFang.Diagnostics
             WinApiImport.QueryPerformanceCounter(out PerfomanceCount);
             WinApiImport.QueryPerformanceFrequency(out Frequency);
             WinApiImport.GetSystemTimeAsFileTime(out var fileTime);
-            SystemFileAsFileTime = (ulong)fileTime.dwLowDateTime << 32 + fileTime.dwHighDateTime;
+            SystemFileAsFileTime = ((ulong)fileTime.dwLowDateTime << 32) + (ulong)fileTime.dwHighDateTime;
         }
 
         public PerfomanceSnapshot Difference(PerfomanceSnapshot snapshot)

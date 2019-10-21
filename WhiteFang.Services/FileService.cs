@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace WhiteFang.Services
 {
@@ -27,9 +28,7 @@ namespace WhiteFang.Services
 
         public void Min(string outputFile, params string[] inputFiles)
         {
-            var readers = inputFiles
-                .Select(file => new StreamReader(file))
-                .ToList();
+            var readers = GetReaders(inputFiles);
 
             using (var writer = new StreamWriter(new FileStream(outputFile, FileMode.CreateNew)))
             {
@@ -44,7 +43,6 @@ namespace WhiteFang.Services
                     {
                         var min = readers
                             .Select(r => int.Parse(r.ReadLine()))
-                            .ToList()
                             .Min();
 
                         writer.WriteLine(min);
@@ -52,12 +50,80 @@ namespace WhiteFang.Services
                 }
                 finally
                 {
-                    foreach(var reader in readers)
-                    {
-                        reader.Close();
-                    }
+                    CloseReaders(readers);
                 }
             }
+        }
+
+        public void MinParallel(string outputFile, params string[] inputFiles)
+        {
+            var readers = GetReaders(inputFiles);
+
+            using (var writer = new StreamWriter(new FileStream(outputFile, FileMode.CreateNew)))
+            {
+                if (inputFiles.Length == 0)
+                {
+                    return;
+                }
+
+                try
+                {
+                    var contents = new List<List<int>>();
+                    var pool = new List<Thread>();
+                    foreach(var reader in readers)
+                    {
+                        CreateReadTask(contents, pool, reader);
+                    }
+
+                    foreach (var task in pool)
+                    {
+                        task.Join();
+                    }
+
+                    for (int i = 0; contents.All(c => c.Count > i); i++)
+                    {
+                        var min = contents
+                            .Select(c => c[i])
+                            .Min();
+
+                        writer.WriteLine(min);
+                    }
+                }
+                finally
+                {
+                    CloseReaders(readers);
+                }
+            }
+        }
+
+        private static void CreateReadTask(List<List<int>> contents, List<Thread> pool, StreamReader reader)
+        {
+            var readTask = new Thread(() =>
+            {
+                var content = new List<int>();
+                while (!reader.EndOfStream)
+                {
+                    content.Add(int.Parse(reader.ReadLine()));
+                }
+                contents.Add(content);
+            });
+            pool.Add(readTask);
+            readTask.Start();
+        }
+
+        private static void CloseReaders(List<StreamReader> readers)
+        {
+            foreach (var reader in readers)
+            {
+                reader.Close();
+            }
+        }
+
+        private static List<StreamReader> GetReaders(string[] inputFiles)
+        {
+            return inputFiles
+                .Select(file => new StreamReader(file))
+                .ToList();
         }
     }
 }
