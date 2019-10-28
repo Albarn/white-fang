@@ -13,54 +13,14 @@ namespace WhiteFang.Services.Tests
     public class FileServiceTests
     {
         private readonly FileService sut;
-        private List<string> files;
-        private string outputFile;
-        private readonly int fileNumber;
         private readonly int fileSize;
+        private readonly int fileNumber;
 
         public FileServiceTests(int fileSize = 1024, int fileNumber = 3)
         {
             sut = new FileService();
-            files = new List<string>();
-            outputFile = string.Empty;
-            this.fileNumber = fileNumber;
             this.fileSize = fileSize;
-        }
-
-        private List<int> expectedFileContent;
-        [SetUp]
-        public void CreateFiles()
-        {
-            var time = DateTime.Now;
-
-            var dir = $"logs\\{time.Year}.{time.Month}.{time.Day}\\{TestContext.CurrentContext.Test.MethodName}\\";
-            Directory.CreateDirectory(dir);
-
-            files = new List<string>();
-            for(int i = 0; i < fileNumber; i++)
-            {
-                files.Add($"{dir}{time.Ticks}-{fileSize}-{fileNumber}#{i}");
-            }
-            outputFile = $"{dir}{time.Ticks}-{fileSize}-{fileNumber}";
-
-            if (fileNumber == 0)
-            {
-                return;
-            }
-
-            var contents = new List<List<int>>();
-            foreach(var file in files)
-            {
-                contents.Add(sut.Create(file, fileSize));
-            }
-
-            expectedFileContent = new List<int>();
-            for(int i = 0; contents.All(c=>c.Count>i); i++)
-            {
-                expectedFileContent.Add(contents
-                    .Select(c => c[i])
-                    .Min());
-            }
+            this.fileNumber = fileNumber;
         }
 
         private PerfomanceSnapshot setUpSnapshot;
@@ -89,13 +49,14 @@ namespace WhiteFang.Services.Tests
         public void Min_Any_ShouldWriteMinToFile()
         {
             // arrange
+            CreateFiles(out var inputFiles, out var outputFile, out List<int> min);
 
             // act
-            sut.Min(outputFile, files.ToArray());
+            sut.Min(inputFiles, outputFile, sut.Read);
             var output = File.ReadAllText(outputFile);
 
             // assert
-            Assert.True(expectedFileContent.SequenceEqual(output
+            Assert.True(min.SequenceEqual(output
                 .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(line => int.Parse(line))));
         }
@@ -104,15 +65,52 @@ namespace WhiteFang.Services.Tests
         public void MinParallel_Any_ShouldWriteMinToFile()
         {
             // arrange
+            CreateFiles(out var inputs, out var outputFile, out List<int> min);
 
             // act
-            sut.MinParallel(outputFile, files.ToArray());
+            sut.Min(inputs, outputFile, sut.ReadParallel);
             var output = File.ReadAllText(outputFile);
 
             // assert
-            Assert.True(expectedFileContent.SequenceEqual(output
+            Assert.True(min.SequenceEqual(output
                 .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(line => int.Parse(line))));
+        }
+
+        private void CreateFiles(out string[] inputFiles, out string outputFile, out List<int> min)
+        {
+            var time = DateTime.Now;
+
+            var dir = $"logs\\{time.Year}.{time.Month}.{time.Day}\\{TestContext.CurrentContext.Test.MethodName}\\";
+            Directory.CreateDirectory(dir);
+
+            inputFiles = new string[fileNumber];
+            min = new List<int>();
+            for (int i = 0; i < fileNumber; i++)
+            {
+                inputFiles[i] = $"{dir}{time.Ticks}-{fileSize}-{fileNumber}#{i}";
+                CreateInputFile(inputFiles[i], min);
+            }
+            outputFile = $"{dir}{time.Ticks}-{fileSize}-{fileNumber}";
+        }
+
+        private void CreateInputFile(string fileName, List<int> min)
+        {
+            using (var writer = new StreamWriter(new FileStream(fileName, FileMode.Create)))
+            {
+                var f = new Random((int)DateTime.Now.Ticks);
+
+                for (int i = 0; writer.BaseStream.Length < fileSize; i++)
+                {
+                    var num = f.Next();
+                    if (min.Count <= i)
+                    {
+                        min.Add(num);
+                    }
+                    min[i] = Math.Min(min[i], num);
+                    writer.WriteLine(num.ToString().PadLeft(20, '0'));
+                }
+            }
         }
     }
 }

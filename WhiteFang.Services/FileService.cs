@@ -8,110 +8,89 @@ namespace WhiteFang.Services
 {
     public class FileService
     {
-        public List<int> Create(string name, int size)
+        public readonly List<List<int>> contents;
+        public int lineLength;
+        private StreamWriter resultWriter;
+        private List<Thread> pool;
+
+        public FileService(int lineSize = 20)
+        { 
+            contents = new List<List<int>>();
+            pool = new List<Thread>();
+        }
+
+        public void Read(StreamReader reader)
         {
+            ReadNumber(reader);
+        }
+
+        public void ReadParallel(StreamReader reader)
+        {
+            var task = new Thread(ReadNumber);
+            pool.Add(task);
+            task.Start(reader);
+        }
+
+        public void Min(string[] inputFiles, string outputFile, Action<StreamReader> readStrategy)
+        {
+            var readers = GetReaders(inputFiles);
+
+            if (inputFiles.Length == 0)
+            {
+                return;
+            }
+
+            contents.Clear();
+            pool.Clear();
+
+            try
+            {
+                resultWriter = new StreamWriter(new FileStream(outputFile, FileMode.CreateNew));
+
+                foreach (var reader in readers)
+                {
+                    readStrategy(reader);
+                }
+
+                foreach (var task in pool)
+                {
+                    task.Join();
+                }
+
+                WriteContent();
+            }
+            finally
+            {
+                resultWriter.Close();
+                CloseReaders(readers);
+            }
+        }
+
+        private void ReadNumber(object param)
+        {
+            var reader = param as StreamReader;
+
             var content = new List<int>();
-            using (var writer = new StreamWriter(new FileStream(name, FileMode.Create)))
+            while (!reader.EndOfStream)
             {
-                var f = new Random((int)DateTime.Now.Ticks);
-
-                while(writer.BaseStream.Length < size)
-                {
-                    var num = f.Next();
-                    content.Add(num);
-                    writer.WriteLine(num);
-                }
+                content.Add(int.Parse(reader.ReadLine()));
             }
-
-            return content;
+            contents.Add(content);
         }
 
-        public void Min(string outputFile, params string[] inputFiles)
+        private void WriteContent()
         {
-            var readers = GetReaders(inputFiles);
-
-            using (var writer = new StreamWriter(new FileStream(outputFile, FileMode.CreateNew)))
+            for (int i = 0; contents.All(c => c.Count > i); i++)
             {
-                if (inputFiles.Length == 0)
-                {
-                    return;
-                }
+                var min = contents
+                    .Select(c => c[i])
+                    .Min();
 
-                try
-                {
-                    while (!readers.Any(r => r.EndOfStream))
-                    {
-                        var min = readers
-                            .Select(r => int.Parse(r.ReadLine()))
-                            .Min();
-
-                        writer.WriteLine(min);
-                    }
-                }
-                finally
-                {
-                    CloseReaders(readers);
-                }
+                resultWriter.WriteLine(min.ToString().PadLeft(lineLength, '0'));
             }
         }
 
-        public void MinParallel(string outputFile, params string[] inputFiles)
-        {
-            var readers = GetReaders(inputFiles);
-
-            using (var writer = new StreamWriter(new FileStream(outputFile, FileMode.CreateNew)))
-            {
-                if (inputFiles.Length == 0)
-                {
-                    return;
-                }
-
-                try
-                {
-                    var contents = new List<List<int>>();
-                    var pool = new List<Thread>();
-                    foreach(var reader in readers)
-                    {
-                        CreateReadTask(contents, pool, reader);
-                    }
-
-                    foreach (var task in pool)
-                    {
-                        task.Join();
-                    }
-
-                    for (int i = 0; contents.All(c => c.Count > i); i++)
-                    {
-                        var min = contents
-                            .Select(c => c[i])
-                            .Min();
-
-                        writer.WriteLine(min);
-                    }
-                }
-                finally
-                {
-                    CloseReaders(readers);
-                }
-            }
-        }
-
-        private static void CreateReadTask(List<List<int>> contents, List<Thread> pool, StreamReader reader)
-        {
-            var readTask = new Thread(() =>
-            {
-                var content = new List<int>();
-                while (!reader.EndOfStream)
-                {
-                    content.Add(int.Parse(reader.ReadLine()));
-                }
-                contents.Add(content);
-            });
-            pool.Add(readTask);
-            readTask.Start();
-        }
-
-        private static void CloseReaders(List<StreamReader> readers)
+        private static void CloseReaders(IEnumerable<StreamReader> readers)
         {
             foreach (var reader in readers)
             {
@@ -119,7 +98,7 @@ namespace WhiteFang.Services
             }
         }
 
-        private static List<StreamReader> GetReaders(string[] inputFiles)
+        private static List<StreamReader> GetReaders(IEnumerable<string> inputFiles)
         {
             return inputFiles
                 .Select(file => new StreamReader(file))
