@@ -41,8 +41,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileService.cs" />
+    <Compile Include="FileCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WhiteFang.Threading\WhiteFang.Threading.csproj">
+      <Project>{5F40E324-C9C0-409E-873E-DACF1EAC736C}</Project>
+      <Name>WhiteFang.Threading</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

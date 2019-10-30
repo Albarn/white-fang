@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhiteFang.Services", "White
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhiteFang.Services.Tests", "WhiteFang.Services.Tests\WhiteFang.Services.Tests.csproj", "{9E77510D-8B2F-4506-A47C-BC0D082B6E94}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhiteFang.Threading", "WhiteFang.Threading\WhiteFang.Threading.csproj", "{5F40E324-C9C0-409E-873E-DACF1EAC736C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{9E77510D-8B2F-4506-A47C-BC0D082B6E94}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E77510D-8B2F-4506-A47C-BC0D082B6E94}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E77510D-8B2F-4506-A47C-BC0D082B6E94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F40E324-C9C0-409E-873E-DACF1EAC736C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F40E324-C9C0-409E-873E-DACF1EAC736C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F40E324-C9C0-409E-873E-DACF1EAC736C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F40E324-C9C0-409E-873E-DACF1EAC736C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

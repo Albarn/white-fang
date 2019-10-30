@@ -3,30 +3,43 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using WhiteFang.Threading;
 
 namespace WhiteFang.Services
 {
-    public class FileService
+    public class FileCalculator : IDisposable
     {
         public readonly List<List<int>> contents;
-        public int lineLength;
+        public readonly int lineLength;
+        private readonly List<Thread> pool;
+        private readonly IntPtr semaphore;
         private StreamWriter resultWriter;
-        private List<Thread> pool;
 
-        public FileService(int lineSize = 20)
-        { 
+        public FileCalculator(int threadCapacity = 2, int lineLength = 20)
+        {
             contents = new List<List<int>>();
             pool = new List<Thread>();
+
+            this.lineLength = lineLength;
+            semaphore = SemaphoreService.Create(Guid.NewGuid().ToString(), threadCapacity);
         }
 
         public void Read(StreamReader reader)
         {
-            ReadNumber(reader);
+            ReadNumbers(reader);
         }
 
         public void ReadParallel(StreamReader reader)
         {
-            var task = new Thread(ReadNumber);
+            var task = new Thread(ReadNumbers);
+            pool.Add(task);
+            task.Start(reader);
+        }
+
+        public void ReadSynchronized(StreamReader reader)
+        {
+            SemaphoreService.Wait(semaphore);
+            var task = new Thread(ReadNumbers);
             pool.Add(task);
             task.Start(reader);
         }
@@ -66,7 +79,7 @@ namespace WhiteFang.Services
             }
         }
 
-        private void ReadNumber(object param)
+        private void ReadNumbers(object param)
         {
             var reader = param as StreamReader;
 
@@ -76,6 +89,7 @@ namespace WhiteFang.Services
                 content.Add(int.Parse(reader.ReadLine()));
             }
             contents.Add(content);
+            SemaphoreService.Release(semaphore);
         }
 
         private void WriteContent()
@@ -103,6 +117,11 @@ namespace WhiteFang.Services
             return inputFiles
                 .Select(file => new StreamReader(file))
                 .ToList();
+        }
+
+        public void Dispose()
+        {
+            SemaphoreService.Close(semaphore);
         }
     }
 }

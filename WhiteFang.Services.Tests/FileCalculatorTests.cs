@@ -7,18 +7,18 @@ using WhiteFang.Diagnostics;
 
 namespace WhiteFang.Services.Tests
 {
-    [TestFixture(64 * 1024, 3)]
-    [TestFixture(1024 * 1024, 3)]
-    [TestFixture(16 * 1024 * 1024, 3)]
-    public class FileServiceTests
+    [TestFixture(64 * 1024, 3, 2)]
+    [TestFixture(1024 * 1024, 3, 2)]
+    [TestFixture(16 * 1024 * 1024, 3, 2)]
+    public class FileCalculatorTests
     {
-        private readonly FileService sut;
+        private readonly FileCalculator sut;
         private readonly int fileSize;
         private readonly int fileNumber;
 
-        public FileServiceTests(int fileSize = 1024, int fileNumber = 3)
+        public FileCalculatorTests(int fileSize = 1024, int fileNumber = 3, int threadCapacity = 2)
         {
-            sut = new FileService();
+            sut = new FileCalculator(threadCapacity);
             this.fileSize = fileSize;
             this.fileNumber = fileNumber;
         }
@@ -69,6 +69,22 @@ namespace WhiteFang.Services.Tests
 
             // act
             sut.Min(inputs, outputFile, sut.ReadParallel);
+            var output = File.ReadAllText(outputFile);
+
+            // assert
+            Assert.True(min.SequenceEqual(output
+                .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => int.Parse(line))));
+        }
+
+        [Test]
+        public void MinSynchronized_Any_ShouldWriteMinToFile()
+        {
+            // arrange
+            CreateFiles(out var inputs, out var outputFile, out List<int> min);
+
+            // act
+            sut.Min(inputs, outputFile, sut.ReadSynchronized);
             var output = File.ReadAllText(outputFile);
 
             // assert
