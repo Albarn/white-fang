@@ -78,7 +78,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Import\LPSECURITY_ATTRIBUTES.cs" />
+    <Compile Include="Import\OVERLAPPED.cs" />
     <Compile Include="Import\WinApiImport.cs" />
+    <Compile Include="MailSlotService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SemaphoreService.cs" />
   </ItemGroup>

@@ -7,20 +7,22 @@ using WhiteFang.Diagnostics;
 
 namespace WhiteFang.Services.Tests
 {
-    [TestFixture(64 * 1024, 3, 2)]
-    [TestFixture(1024 * 1024, 3, 2)]
-    [TestFixture(16 * 1024 * 1024, 3, 2)]
+    [TestFixture(64 * 1024)]
+    [TestFixture(1024 * 1024)]
+    [TestFixture(16 * 1024 * 1024)]
     public class FileCalculatorTests
     {
         private readonly FileCalculator sut;
         private readonly int fileSize;
         private readonly int fileNumber;
 
-        public FileCalculatorTests(int fileSize = 1024, int fileNumber = 3, int threadCapacity = 2)
+        public FileCalculatorTests(int fileSize = 1024)
         {
-            sut = new FileCalculator(threadCapacity);
             this.fileSize = fileSize;
-            this.fileNumber = fileNumber;
+
+            fileNumber = 3;
+
+            sut = new FileCalculator();
         }
 
         private PerfomanceSnapshot setUpSnapshot;
@@ -52,7 +54,7 @@ namespace WhiteFang.Services.Tests
             CreateFiles(out var inputFiles, out var outputFile, out List<int> min);
 
             // act
-            sut.Min(inputFiles, outputFile, sut.Read);
+            sut.Min(inputFiles, outputFile, FileReader.Read);
             var output = File.ReadAllText(outputFile);
 
             // assert
@@ -68,7 +70,7 @@ namespace WhiteFang.Services.Tests
             CreateFiles(out var inputs, out var outputFile, out List<int> min);
 
             // act
-            sut.Min(inputs, outputFile, sut.ReadParallel);
+            sut.Min(inputs, outputFile, FileReader.ReadParallel);
             var output = File.ReadAllText(outputFile);
 
             // assert
@@ -84,7 +86,23 @@ namespace WhiteFang.Services.Tests
             CreateFiles(out var inputs, out var outputFile, out List<int> min);
 
             // act
-            sut.Min(inputs, outputFile, sut.ReadSynchronized);
+            sut.Min(inputs, outputFile, FileReader.ReadSynchronized);
+            var output = File.ReadAllText(outputFile);
+
+            // assert
+            Assert.True(min.SequenceEqual(output
+                .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => int.Parse(line))));
+        }
+
+        [Test]
+        public void MinInProcess_Any_ShouldWriteMinToFile()
+        {
+            // arrange
+            CreateFiles(out var inputs, out var outputFile, out List<int> min);
+
+            // act
+            sut.Min(inputs, outputFile, FileReader.ReadInProcess);
             var output = File.ReadAllText(outputFile);
 
             // assert

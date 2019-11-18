@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhiteFang.Services.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhiteFang.Threading", "WhiteFang.Threading\WhiteFang.Threading.csproj", "{5F40E324-C9C0-409E-873E-DACF1EAC736C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhiteFang.Reader", "WhiteFang.Reader\WhiteFang.Reader.csproj", "{C1C975B1-F3AE-48FC-98FB-6627CDDF6A6E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{5F40E324-C9C0-409E-873E-DACF1EAC736C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F40E324-C9C0-409E-873E-DACF1EAC736C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F40E324-C9C0-409E-873E-DACF1EAC736C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1C975B1-F3AE-48FC-98FB-6627CDDF6A6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1C975B1-F3AE-48FC-98FB-6627CDDF6A6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1C975B1-F3AE-48FC-98FB-6627CDDF6A6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1C975B1-F3AE-48FC-98FB-6627CDDF6A6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

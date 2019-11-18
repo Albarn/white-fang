@@ -46,9 +46,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Import\midi.cs" />
-    <Compile Include="Import\MMTIME.cs" />
-    <Compile Include="Import\SYSTEMTIME.cs" />
     <Compile Include="Import\WinApiImport.cs" />
     <Compile Include="PerfomanceSnapshot.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

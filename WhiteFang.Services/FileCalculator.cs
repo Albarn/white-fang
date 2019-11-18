@@ -3,96 +3,48 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using WhiteFang.Threading;
 
 namespace WhiteFang.Services
 {
-    public class FileCalculator : IDisposable
+    public class FileCalculator
     {
-        public readonly List<List<int>> contents;
-        public readonly int lineLength;
-        private readonly List<Thread> pool;
-        private readonly IntPtr semaphore;
-        private StreamWriter resultWriter;
+        public const int LineLength = 20;
 
-        public FileCalculator(int threadCapacity = 2, int lineLength = 20)
+        public void Min(string[] inputFiles, string outputFile, Func<FileQuery, Thread> readStrategy)
         {
-            contents = new List<List<int>>();
-            pool = new List<Thread>();
-
-            this.lineLength = lineLength;
-            semaphore = SemaphoreService.Create(Guid.NewGuid().ToString(), threadCapacity);
-        }
-
-        public void Read(StreamReader reader)
-        {
-            ReadNumbers(reader);
-        }
-
-        public void ReadParallel(StreamReader reader)
-        {
-            var task = new Thread(ReadNumbers);
-            pool.Add(task);
-            task.Start(reader);
-        }
-
-        public void ReadSynchronized(StreamReader reader)
-        {
-            SemaphoreService.Wait(semaphore);
-            var task = new Thread(ReadNumbers);
-            pool.Add(task);
-            task.Start(reader);
-        }
-
-        public void Min(string[] inputFiles, string outputFile, Action<StreamReader> readStrategy)
-        {
-            var readers = GetReaders(inputFiles);
-
-            if (inputFiles.Length == 0)
+            using (var writer = new StreamWriter(outputFile))
             {
-                return;
-            }
+                var queries = inputFiles.Select(file => new FileQuery(file)).ToList();
 
-            contents.Clear();
-            pool.Clear();
-
-            try
-            {
-                resultWriter = new StreamWriter(new FileStream(outputFile, FileMode.CreateNew));
-
-                foreach (var reader in readers)
-                {
-                    readStrategy(reader);
-                }
+                var pool = queries
+                    .Select(query => readStrategy(query));
 
                 foreach (var task in pool)
                 {
                     task.Join();
                 }
 
-                WriteContent();
-            }
-            finally
-            {
-                resultWriter.Close();
-                CloseReaders(readers);
+                var contents = queries.Select(q => ReadContent(q.Reader)).ToList();
+                WriteContent(writer, contents);
             }
         }
 
-        private void ReadNumbers(object param)
+        private static List<int> ReadContent(TextReader reader)
         {
-            var reader = param as StreamReader;
-
             var content = new List<int>();
-            while (!reader.EndOfStream)
+
+            for(var line = reader.ReadLine();
+                !string.IsNullOrEmpty(line);
+                line = reader.ReadLine())
             {
-                content.Add(int.Parse(reader.ReadLine()));
+                int.TryParse(line.Trim(), out var number);
+                content.Add(number);
             }
-            contents.Add(content);
-            SemaphoreService.Release(semaphore);
+
+            return content;
         }
 
-        private void WriteContent()
+        private static void WriteContent(TextWriter writer, IEnumerable<List<int>> contents)
         {
             for (int i = 0; contents.All(c => c.Count > i); i++)
             {
@@ -100,28 +52,8 @@ namespace WhiteFang.Services
                     .Select(c => c[i])
                     .Min();
 
-                resultWriter.WriteLine(min.ToString().PadLeft(lineLength, '0'));
+                writer.WriteLine(min.ToString().PadLeft(LineLength, '0'));
             }
-        }
-
-        private static void CloseReaders(IEnumerable<StreamReader> readers)
-        {
-            foreach (var reader in readers)
-            {
-                reader.Close();
-            }
-        }
-
-        private static List<StreamReader> GetReaders(IEnumerable<string> inputFiles)
-        {
-            return inputFiles
-                .Select(file => new StreamReader(file))
-                .ToList();
-        }
-
-        public void Dispose()
-        {
-            SemaphoreService.Close(semaphore);
         }
     }
 }
