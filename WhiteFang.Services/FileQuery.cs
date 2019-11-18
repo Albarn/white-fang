@@ -1,26 +1,16 @@
-﻿using System;
-using System.IO;
+﻿using System.Collections.ObjectModel;
 
 namespace WhiteFang.Services
 {
-    public class FileQuery : IDisposable
+    public class FileQuery
     {
         public string Path { get; set; }
-        public readonly StreamReader Reader;
-        public readonly StreamWriter Writer;
-        private readonly MemoryStream output;
+        public readonly ObservableCollection<string> Output;
 
         public FileQuery(string path)
         {
             Path = path;
-            output = new MemoryStream();
-            Reader = new StreamReader(output);
-            Writer = new StreamWriter(output);
-        }
-
-        public void Dispose()
-        {
-            output.Close();
+            Output = new ObservableCollection<string>();
         }
     }
 }

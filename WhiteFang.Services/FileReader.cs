@@ -65,11 +65,9 @@ namespace WhiteFang.Services
             {
                 while (!reader.EndOfStream)
                 {
-                    query.Writer.WriteLine(reader.ReadLine());
+                    query.Output.Add(reader.ReadLine());
                 }
             }
-            query.Writer.Flush();
-            query.Writer.BaseStream.Position = 0;
 
             SemaphoreService.Release(instance.semaphore);
         }
@@ -85,16 +83,21 @@ namespace WhiteFang.Services
             {
                 UseShellExecute = false
             };
-            Process.Start(readerProc).WaitForExit();
+            var proc = Process.Start(readerProc);
 
-            for (var line = MailSlotService.Read(slot);
-                !string.IsNullOrEmpty(line);
-                line = MailSlotService.Read(slot))
+            bool exit = false;
+            while (true)
             {
-                query.Writer.WriteLine(line);
+                exit = proc.HasExited;
+                var line = MailSlotService.Read(slot);
+                if (!string.IsNullOrEmpty(line))
+                {
+                    query.Output.Add(line);
+                } else if (exit)
+                {
+                    break;
+                }
             }
-            query.Writer.Flush();
-            query.Writer.BaseStream.Position = 0;
 
             MailSlotService.Close(slot);
         }

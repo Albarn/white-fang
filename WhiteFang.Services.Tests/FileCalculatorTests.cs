@@ -19,7 +19,6 @@ namespace WhiteFang.Services.Tests
         public FileCalculatorTests(int fileSize = 1024)
         {
             this.fileSize = fileSize;
-
             fileNumber = 3;
 
             sut = new FileCalculator();
